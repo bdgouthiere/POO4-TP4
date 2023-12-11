@@ -1,60 +1,197 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ModernRecrut.MVC.Areas.Identity.Data;
+using ModernRecrut.MVC.DTO;
+using ModernRecrut.MVC.Interfaces;
+using ModernRecrut.MVC.Models;
+using System.Diagnostics.Eventing.Reader;
 
 namespace ModernRecrut.MVC.Controllers
 {
-	public class PostulationsController : Controller
-	{
+    public class PostulationsController : Controller
+    {
         #region Attributs
-		private readonly ILogger _logger;
-		private readonly UserManager<Utilisateur> _userManager;
-		private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ILogger<PostulationsController> _logger;
+        private readonly UserManager<Utilisateur> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IPostulationsService _postulationsService;
+        private readonly IDocumentsService _documentsService;
+        private readonly IOffreEmploisService _offreEmploisService;
         #endregion
 
         #region Constructeur
         public PostulationsController(ILogger<PostulationsController> logger,
-			UserManager<Utilisateur> userManager,
-			RoleManager<IdentityRole> roleManager)
+            UserManager<Utilisateur> userManager,
+            RoleManager<IdentityRole> roleManager,
+            IPostulationsService postulationsService,
+            IDocumentsService documentsService,
+            IOffreEmploisService offreEmploisService)
         {
-			_logger = logger;
-			_userManager = userManager;
-			_roleManager = roleManager;
+            _logger = logger;
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _postulationsService = postulationsService;
+            _documentsService = documentsService;
+            _offreEmploisService = offreEmploisService;
         }
-		#endregion
+        #endregion
 
-		#region Méthodes publiques
-		// Postuler (Accessible - Candidat ou Admin)
-		[Authorize(Roles="Admin, Candidat")]
-		public ActionResult Postuler()
-		{
-			// Journalisation
-			_logger.LogInformation($"Visite de la page postuler par l'utilisateur {User.Identity.Name}");
+        #region Méthodes publiques
+        // Postuler (Accessible - Candidat ou Admin)
+        [Authorize(Roles = "Admin, Candidat")]
+        // GET : Ajout
+        public async Task<ActionResult> Postuler(int idOffreEmploi)
+        {
+            // Journalisation
+            _logger.LogInformation($"Visite de la page postuler par l'utilisateur {User.Identity.Name}");
 
-			return View();
-		}
+            OffreEmploi? offreEmploi = await _offreEmploisService.ObtenirSelonId(idOffreEmploi);
+            if (offreEmploi == null )
+                return NotFound();
+
+            ViewData["OffreEmploi"] = offreEmploi;
+
+            return View();
+        }
+
+        [Authorize(Roles = "Admin, Candidat")]
+        // POST : Ajout
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Postuler(RequetePostulation requetPostulation)
+        {
+            // Charger les documents pour le candidat
+            IEnumerable<string>? documents = await _documentsService.ObtenirSelonUtilisateurId(requetPostulation.CandidatId);
+
+            // Check si candidat a un CV
+            bool cvPresent = documents?.Any(d => d.StartsWith($"{requetPostulation.CandidatId}_CV_")) ?? false;
+            if (!cvPresent)
+                ModelState.AddModelError("all", "Un CV est obligatoire pour postuler. Veuillez déposer au préalable un CV dans votre espace Documents");
+
+            // Check si candidat a une lettre de motivation _LettreDeMotivation_
+            bool lettreMotivationPresent = documents?.Any(d => d.StartsWith($"{requetPostulation.CandidatId}_LettreDeMotivation_")) ?? false;
+            if (!lettreMotivationPresent)
+                ModelState.AddModelError("all", "Une lettre de motivation est obligatoire pour postuler. Veuillez déposer au préalable une lettre de motivation dans votre espace Documents");
+
+            // Check date
+            if (requetPostulation.DateDisponibilite <= DateTime.Today || requetPostulation.DateDisponibilite > DateTime.Today.AddDays(45))
+                ModelState.AddModelError("DateDisponibilite", "La date de disponibilité doit être supérieure à la date du jour et inférieure au < date correspondante à date du jour + 45 jours >");
+
+            // Pretention salarial inférieur à 150000
+            if(requetPostulation.PretentionSalariale > 150000m)
+                ModelState.AddModelError("PretentionSalariale", "Votre présentation salariale est au-delà de nos limites");
+
+            if (ModelState.IsValid)
+            {
+                Postulation? postulation = await _postulationsService.Ajouter(requetPostulation);
+
+                if (postulation == null)
+                {
+                    ModelState.AddModelError("all", "Problème lors de l'ajout de la postulation, veuillez reessayer");
+                }
+                else
+                {
+                    return RedirectToAction("Index", "OffreEmplois");
+                }
+            }
+
+            OffreEmploi? offreEmploi = await _offreEmploisService.ObtenirSelonId(requetPostulation.OffreDemploiId);
+            if (offreEmploi == null )
+                return NotFound();
+
+            ViewData["OffreEmploi"] = offreEmploi;
+
+            return View(requetPostulation);
+        }
 
         // Liste Postulation (Accessible - Employé ou Admin)
-		[Authorize(Roles="Admin, Employé")]
-        public ActionResult ListePostulations()
-		{
-			// Journalisation
-			_logger.LogInformation($"Visite de la page liste des postulation par l'utilisateur {User.Identity.Name}");
+        [Authorize(Roles = "Admin, Employé")]
+        public async Task<ActionResult> ListePostulations()
+        {
+            // Journalisation
+            _logger.LogInformation($"Visite de la page liste des postulation par l'utilisateur {User.Identity.Name}");
 
-			return View();
-		}
+            IEnumerable<Postulation>? postulations = await _postulationsService.ObtenirTout();
 
-		// Notes (Accessible RH ou Admin)
-		[Authorize(Roles="Admin, RH")]
-		public ActionResult Notes()
-		{
-			// Journalisation
-			_logger.LogInformation($"Visite de la page notes() par l'utilisateur {User.Identity.Name}");
+            return View(postulations);
+        }
 
-			return View();
-		}
-		#endregion
-	}
+        // Details
+        public async Task<ActionResult> Details(int id)
+        {
+            Postulation? postulation = await _postulationsService.ObtenirSelonId(id);
+
+            if(postulation == null)
+            {
+                // Journalisation - TODO
+                return NotFound();
+            }
+
+            // Journalisation - TODO
+
+            return View(postulation);
+        }
+
+        // GET : Modifier
+        public async Task<ActionResult> Edit(int id)
+        {
+            Postulation? postulation = await _postulationsService.ObtenirSelonId(id);
+
+            if(postulation == null)
+                return NotFound();
+
+            return View(postulation);
+        }
+
+        // POST : Modifier
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Edit(Postulation postulation)
+        {
+            // Validation
+
+            if (ModelState.IsValid)
+            {
+                await _postulationsService.Modifier(postulation);
+                // Journalisation la modification
+                return RedirectToAction(nameof(ListePostulations));
+            }
+
+            return View(postulation);
+        }
+
+        // GET : Supprimer
+        public async Task<ActionResult> Delete(int id)
+        {
+            Postulation postulation = await _postulationsService.ObtenirSelonId(id);
+
+            if (postulation == null)
+                return NotFound();
+
+            return View(postulation);
+        }
+
+        // POST : Supprimer
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Delete(int id, Postulation postulation)
+        {
+            if (ModelState.IsValid)
+                _postulationsService.Supprimer(postulation);
+
+            return RedirectToAction(nameof(ListePostulations));
+        }
+
+        // Notes (Accessible RH ou Admin)
+        [Authorize(Roles = "Admin, RH")]
+        public ActionResult Notes()
+        {
+            // Journalisation
+            _logger.LogInformation($"Visite de la page notes() par l'utilisateur {User.Identity.Name}");
+
+            return View();
+        }
+        #endregion
+    }
 }

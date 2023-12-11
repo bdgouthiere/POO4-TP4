@@ -69,6 +69,7 @@
                 {
                     <a asp-controller="Favoris" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-secondary">Retirer des favoris</a>    
                 }
+                <a asp-controller="Postulations" asp-action="Postuler" asp-route-idOffreEmploi="@item.Id" class="btn btn-outline-primary">Postuler</a>
             </td>
         </tr>
 }

@@ -33,6 +33,12 @@ builder.Services.AddHttpClient<IFavorisService, FavorisServiceProxy>(client =>
 
 builder.Services.AddHttpClient<IDocumentsService, DocumentsServiceProxy>(client =>
 	client.BaseAddress = new Uri(builder.Configuration.GetValue<string>("UrlDocumentAPI")));
+
+builder.Services.AddHttpClient<IPostulationsService, PostulationsServiceProxy>(client =>
+	client.BaseAddress = new Uri(builder.Configuration.GetValue<string>("UrlPostulationAPI")));
+
+builder.Services.AddHttpClient<INotesService, NotesServiceProxy>(client =>
+	client.BaseAddress = new Uri(builder.Configuration.GetValue<string>("UrlNoteAPI")));
 //builder.Services.AddScoped<IDocumentsService, DocumentsServiceProxy>();
 
 var app = builder.Build();

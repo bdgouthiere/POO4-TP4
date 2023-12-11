@@ -1,5 +1,61 @@
-﻿@{
-	ViewData["Title"] = "Liste postulations";
+﻿@using Microsoft.AspNetCore.Identity;
+@using ModernRecrut.MVC.Areas.Identity.Data;
+@using ModernRecrut.MVC.Interfaces;
+@inject UserManager<Utilisateur> _userManager
+@inject IOffreEmploisService _offreEmploisService;
+@model IEnumerable<ModernRecrut.MVC.Models.Postulation>
+
+@{
+    ViewData["Title"] = "ListePostulations";
 }
 
-<h1>Liste postulations</h1>
+<h1>ListePostulations</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Nom du candidat
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.offreDEmploiId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PretentionSalariale)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DateDisponibilite)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @{ Utilisateur candidat = await _userManager.FindByIdAsync(item.CandidatId); }
+                @Html.DisplayFor(modelItem => candidat.NomComplet)
+
+            </td>
+            <td>
+                @{ OffreEmploi offreEmploi = await _offreEmploisService.ObtenirSelonId(item.offreDEmploiId);}
+                @Html.DisplayFor(modelItem => offreEmploi.Poste)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PretentionSalariale)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DateDisponibilite)
+            </td>
+            <td>
+                @Html.ActionLink("Modifier", "Edit", new { id=item.Id }) |
+                @Html.ActionLink("Details", "Details", new { id=item.Id }) |
+                @Html.ActionLink("Supprimer", "Delete", new { id=item.Id })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
