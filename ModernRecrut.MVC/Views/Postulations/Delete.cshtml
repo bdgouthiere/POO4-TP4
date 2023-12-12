@@ -1,4 +1,9 @@
-﻿@model ModernRecrut.MVC.Models.Postulation
+﻿@using Microsoft.AspNetCore.Identity;
+@using ModernRecrut.MVC.Areas.Identity.Data;
+@using ModernRecrut.MVC.Interfaces;
+@inject UserManager<Utilisateur> _userManager
+@inject IOffreEmploisService _offreEmploisService;
+@model ModernRecrut.MVC.Models.Postulation
 
 @{
     ViewData["Title"] = "Delete";
@@ -12,22 +17,18 @@
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Id)
+            Nom du candidat
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CandidatId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CandidatId)
+            @{ Utilisateur candidat = await _userManager.FindByIdAsync(Model.CandidatId);}
+            @Html.DisplayFor(model => candidat.NomComplet)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.offreDEmploiId)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.offreDEmploiId)
+            @{ OffreEmploi offreEmploi = await _offreEmploisService.ObtenirSelonId(Model.offreDEmploiId);}
+            @Html.DisplayFor(model => offreEmploi.Poste)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.PretentionSalariale)
@@ -44,7 +45,7 @@
     </dl>
     
     <form asp-action="Delete">
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
+        <input type="submit" value="Supprimer" class="btn btn-danger" /> |
+        <a asp-action="ListePostulations">Retour à la liste des postulations</a>
     </form>
 </div>

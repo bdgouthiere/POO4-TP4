@@ -177,8 +177,8 @@ namespace ModernRecrut.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Delete(int id, Postulation postulation)
         {
-            if (ModelState.IsValid)
-                _postulationsService.Supprimer(postulation);
+            // Journalisation  
+            _postulationsService.Supprimer(postulation);
 
             return RedirectToAction(nameof(ListePostulations));
         }

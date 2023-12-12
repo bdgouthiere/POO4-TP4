@@ -1,10 +1,11 @@
-﻿using ModernRecrut.Postulation.API.Models;
+﻿using ModernRecrut.Postulation.API.Interfaces;
+using ModernRecrut.Postulation.API.Models;
 
 namespace ModernRecrut.Postulation.API.Services
 {
-    public class GenererEvaluationService
+    public class GenererEvaluationService : IGenererEvaluationService
     {
-        public Note GenererEvaluation(decimal pretentionSalariale)
+        public Note GenererEvaluation(decimal pretentionSalariale) 
         {
             string appreciation;
 

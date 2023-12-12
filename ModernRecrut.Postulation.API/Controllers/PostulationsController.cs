@@ -47,7 +47,6 @@ namespace ModernRecrut.Postulation.API.Controllers
             if (ModelState.IsValid)
             {
                 Models.Postulation postulation = await _postulationsService.Ajouter(requetePostulation);
-
                 if (postulation == null)
                     return BadRequest();
 

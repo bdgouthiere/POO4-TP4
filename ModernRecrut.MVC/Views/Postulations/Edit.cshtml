@@ -1,4 +1,9 @@
-﻿@model ModernRecrut.MVC.Models.Postulation
+﻿@using Microsoft.AspNetCore.Identity;
+@using ModernRecrut.MVC.Areas.Identity.Data;
+@using ModernRecrut.MVC.Interfaces;
+@inject UserManager<Utilisateur> _userManager
+@inject IOffreEmploisService _offreEmploisService;
+@model ModernRecrut.MVC.Models.Postulation
 
 @{
     ViewData["Title"] = "Edit";
@@ -11,16 +16,15 @@
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
             <div class="form-group">
-                <label asp-for="Id" class="control-label"></label>
-                <input asp-for="Id" class="form-control" />
-                <span asp-validation-for="Id" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CandidatId" class="control-label"></label>
-                <input asp-for="CandidatId" class="form-control" />
-                <span asp-validation-for="CandidatId" class="text-danger"></span>
+                <label class="control-label">Nom du Candidat</label>
+                <input type="hidden" asp-for="CandidatId" />
+                <p>
+					@{ Utilisateur candidat = await _userManager.FindByIdAsync(Model.CandidatId);}
+					@Html.DisplayFor(model => candidat.NomComplet)
+                </p>
             </div>
             <div class="form-group">
                 <label asp-for="offreDEmploiId" class="control-label"></label>

@@ -18,7 +18,8 @@ namespace ModernRecrut.Postulation.API.Services
             Note note = new Note()
             {
                 NoteDetail = requeteNote.NoteDetail,
-                NomEmeteur = requeteNote.NomEmeteur
+                NomEmeteur = requeteNote.NomEmeteur,
+                PostulationId = requeteNote.PostulationId,
             };
             return await _noteRepository.AddAsync(note);
         }

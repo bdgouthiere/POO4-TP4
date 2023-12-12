@@ -16,6 +16,7 @@ builder.Services.AddScoped(typeof(IAsyncRepository<>), typeof(AsyncRepository<>)
 
 builder.Services.AddScoped<IPostulationsService, PostulationsService>();
 builder.Services.AddScoped<INotesService, NotesService>();
+builder.Services.AddScoped<IGenererEvaluationService, GenererEvaluationService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
