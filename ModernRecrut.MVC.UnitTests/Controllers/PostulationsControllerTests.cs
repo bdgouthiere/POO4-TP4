@@ -25,11 +25,11 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
         public async Task Postuler_CVAbsent_Retourne_ViewResultAvecModelStateError()
         {
             // Etant donné
-            string candidatId = It.IsAny<string>();
-            string valideLettreMotivation = candidatId + "_LettreDeMotivation_";
-
             //// Fixtures
             Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
 
             //// Fixture OffreEmploi
             OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
@@ -80,11 +80,11 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
         public async Task Postuler_LettreMotivationAbsent_Retourne_ViewResultAvecModelStateError()
         {
             // Etant donné
-            string candidatId = It.IsAny<string>();
-            string valideCV= candidatId + "_CV_";
-
             //// Fixtures
             Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
 
             //// Fixture OffreEmploi
             OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
@@ -136,12 +136,12 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
         public async Task Postuler_DatePasseeInvalide_Retourne_ViewResultAvecModelStateError()
         {
             // Etant donné
-            string candidatId = It.IsAny<string>();
-            string valideLettreMotivation = candidatId + "_LettreDeMotivation_";
-            string valideCV= candidatId + "_CV_";
-
             //// Fixtures
             Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
 
             //// Fixture OffreEmploi
             OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
@@ -192,12 +192,12 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
         public async Task Postuler_DateFutureInvalide_Retourne_ViewResultAvecModelStateError()
         {
             // Etant donné
-            string candidatId = It.IsAny<string>();
-            string valideLettreMotivation = candidatId + "_LettreDeMotivation_";
-            string valideCV= candidatId + "_CV_";
-
             //// Fixtures
             Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
 
             //// Fixture OffreEmploi
             OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
@@ -248,12 +248,12 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
         public async Task Postuler_DateAujourdhuiInvalide_Retourne_ViewResultAvecModelStateError()
         {
             // Etant donné
-            string candidatId = It.IsAny<string>();
-            string valideLettreMotivation = candidatId + "_LettreDeMotivation_";
-            string valideCV= candidatId + "_CV_";
-
             //// Fixtures
             Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
 
             //// Fixture OffreEmploi
             OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
@@ -304,12 +304,12 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
         public async Task Postuler_PretentionSalarialHorsLimite_Retourne_ViewResultAvecModelStateError()
         {
             // Etant donné
-            string candidatId = It.IsAny<string>();
-            string valideLettreMotivation = candidatId + "_LettreDeMotivation_";
-            string valideCV= candidatId + "_CV_";
-
             //// Fixtures
             Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
 
             //// Fixture OffreEmploi
             OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
@@ -361,12 +361,12 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
         public async Task Postuler_PostulationIsNull_Retourne_ViewResultAvecModelStateError()
         {
             // Etant donné
-            string candidatId = It.IsAny<string>();
-            string valideLettreMotivation = candidatId + "_LettreDeMotivation_";
-            string valideCV= candidatId + "_CV_";
-
             //// Fixtures
             Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
 
             //// Fixture OffreEmploi
             OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
@@ -472,16 +472,6 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             Fixture fixture = new Fixture();
 
             string candidatId = fixture.Create<string>();
-            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
-            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
-
-            //// Fixture OffreEmploi
-            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
-
-            //// Fixture Documents
-            List<string> listDocuments = new List<string>();
-            listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
-            listDocuments.Add(valideCV); // Ajout un document CV
 
             // requete
             RequetePostulation requetePostulation = new RequetePostulation();
@@ -493,11 +483,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             //// Initialisation Instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationService = new Mock<IPostulationsService>();  // Postulation
-            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
-            Postulation postulationAjoutee = fixture.Create<Postulation>();
-            mockPostulationService.Setup(p => p.Ajouter(requetePostulation)).ReturnsAsync(postulationAjoutee); // Postulation valide
             Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
-            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
             Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
             mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync((OffreEmploi)null);
 
@@ -509,7 +495,6 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             // Alors
             actionResult.Should().BeOfType(typeof(NotFoundResult));
         }
-
 
     }
 }
