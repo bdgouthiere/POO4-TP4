@@ -496,5 +496,62 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             actionResult.Should().BeOfType(typeof(NotFoundResult));
         }
 
+        [Fact]
+        public async Task Edit_IdInexistant_Retourne_NotFound()
+        {
+            // Etant donné
+            //Fixture fixture = new Fixture();
+            //Postulation postulation = fixture.Create<Postulation>();
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync((Postulation)null);
+
+            var postulationsController = new PostulationsController(mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            //Lorsque
+            var actionResult = await postulationsController.Edit(3);
+
+            // Alors
+            actionResult.Should().BeOfType<NotFoundResult>();
+            //actionResult.Should().BeOfType(typeof(NotFoundResult));
+        }
+
+        [Fact]
+        public async Task Edit_IdExistant_Retourne_ViewResult()
+        {
+            // Etant donné
+            Fixture fixture = new Fixture();
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+            Postulation postulation = fixture.Create<Postulation>();
+
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(postulation);
+
+            var postulationsController = new PostulationsController(mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            //Lorsque
+            var actionResult = await postulationsController.Edit(3) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull();
+            Postulation postulationResult = actionResult.Model as Postulation;
+            postulationResult.Should().Be(postulation);
+        }
+
+        [Fact]
+        public async Task Edit_Post_PostulationValide_Retourne_RedirectToAction()
+        {
+
+        }
     }
 }
