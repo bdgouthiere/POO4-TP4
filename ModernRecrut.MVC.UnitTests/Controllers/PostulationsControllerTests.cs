@@ -11,6 +11,7 @@ using ModernRecrut.MVC.Models;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -51,7 +52,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             RequetePostulation requetePostulation = new RequetePostulation();
             requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = It.IsAny<int>();
+            requetePostulation.OffreDemploiId = It.IsAny<int>(); // A Modifier Erreur
             requetePostulation.DateDisponibilite = DateTime.Today.AddDays(1);
             requetePostulation.PretentionSalariale = 50000m;
             
@@ -551,7 +552,437 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
         [Fact]
         public async Task Edit_Post_PostulationValide_Retourne_RedirectToAction()
         {
+            // Etant donné
+            //// Fixture
+            Fixture fixture = new Fixture();
 
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+
+            //// Fixture OffreEmploi
+            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
+
+            //// Fixture Documents
+            List<string> listDocuments = new List<string>();
+            listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideCV); // Ajout un document CV
+
+            // requete
+            Postulation postulation = new Postulation();
+            postulation.CandidatId = candidatId;
+            postulation.OffreDEmploiId = offreEmploi.Id;
+            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
+            postulation.PretentionSalariale = 50000m;
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            mockPostulationsService.Setup(p => p.Modifier(postulation)).Returns(Task.CompletedTask); // Postulation valide
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(offreEmploi);
+
+
+            var postulationsController = new PostulationsController(mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            // Lorsque 
+            RedirectToActionResult redirectToActionResult = await postulationsController.Edit(postulation) as RedirectToActionResult;
+
+            // Alors
+            redirectToActionResult.Should().NotBeNull();
+            redirectToActionResult.ActionName.Should().Be("ListePostulations");
+            mockPostulationsService.Verify(p => p.Modifier(It.IsAny<Postulation>()), Times.Once());
+        }
+
+        [Fact]
+        public async Task Edit_Post_CVAbsent_Retourne_ViewResultAvecModelStateError()
+        {
+            // Etant donné
+            //// Fixture
+            Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            //string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+
+            //// Fixture OffreEmploi
+            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
+
+            //// Fixture Documents
+            List<string> listDocuments = new List<string>();
+            //listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
+
+            // requete
+            Postulation postulation = new Postulation();
+            postulation.CandidatId = candidatId;
+            postulation.OffreDEmploiId = offreEmploi.Id;
+            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
+            postulation.PretentionSalariale = 50000m;
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(offreEmploi);
+
+            var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            // Lorsque
+            var actionResult = await postulationsController.Edit(postulation) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull(); // Action Result Not Null
+            var requeteEditResult = actionResult.Model as Postulation;
+            requeteEditResult.Should().Be(postulation);
+            mockPostulationsService.Verify(p => p.Modifier(It.IsAny<Postulation>()), Times.Never);
+            mockOffreEmploiService.Verify(o => o.ObtenirSelonId(postulation.OffreDEmploiId), Times.Once);
+            
+            ////// Validations des erreurs dans le ModelState
+            var modelState = postulationsController.ModelState;
+            modelState.IsValid.Should().BeFalse();
+            modelState.ErrorCount.Should().Be(1);
+            modelState.Should().ContainKey("CV");
+            modelState["CV"].Errors.FirstOrDefault().ErrorMessage.Should().Be("Un CV est obligatoire pour postuler. Veuillez déposer au préalable un CV dans votre espace Documents");
+
+            ////// ViewData
+            actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+        }
+
+        [Fact]
+        public async Task Edit_Post_LettreMotivationAbsent_Retourne_ViewResultAvecModelStateError()
+        {
+            // Etant donné
+            //// Fixture
+            Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            //string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+
+            //// Fixture OffreEmploi
+            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
+
+            //// Fixture Documents
+            List<string> listDocuments = new List<string>();
+            //listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
+
+            // requete
+            Postulation postulation = new Postulation();
+            postulation.CandidatId = candidatId;
+            postulation.OffreDEmploiId = offreEmploi.Id;
+            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
+            postulation.PretentionSalariale = 50000m;
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(offreEmploi);
+
+            var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            // Lorsque
+            var actionResult = await postulationsController.Edit(postulation) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull(); // Action Result Not Null
+            var requeteEditResult = actionResult.Model as Postulation;
+            requeteEditResult.Should().Be(postulation);
+            mockPostulationsService.Verify(p => p.Modifier(It.IsAny<Postulation>()), Times.Never);
+            mockOffreEmploiService.Verify(o => o.ObtenirSelonId(postulation.OffreDEmploiId), Times.Once);
+            
+            ////// Validations des erreurs dans le ModelState
+            var modelState = postulationsController.ModelState;
+            modelState.IsValid.Should().BeFalse();
+            modelState.ErrorCount.Should().Be(1);
+            modelState.Should().ContainKey("LettreMotivation");
+            modelState["LettreMotivation"].Errors.FirstOrDefault().ErrorMessage.Should().Be("Une lettre de motivation est obligatoire pour postuler. Veuillez déposer au préalable une lettre de motivation dans votre espace Documents");
+
+            ////// ViewData
+            actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+
+        }
+
+        [Fact]
+        public async Task Edit_Post_DatePasseeInvalide_Retourne_ViewResultAvecModelStateError()
+        {
+            // Etant donné
+            //// Fixture
+            Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+
+            //// Fixture OffreEmploi
+            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
+
+            //// Fixture Documents
+            List<string> listDocuments = new List<string>();
+            listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
+
+            // requete
+            Postulation postulation = new Postulation();
+            postulation.CandidatId = candidatId;
+            postulation.OffreDEmploiId = offreEmploi.Id;
+            postulation.DateDisponibilite = DateTime.Today.AddDays(-1);
+            postulation.PretentionSalariale = 50000m;
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(offreEmploi);
+
+            var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            // Lorsque
+            var actionResult = await postulationsController.Edit(postulation) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull(); // Action Result Not Null
+            var requeteEditResult = actionResult.Model as Postulation;
+            requeteEditResult.Should().Be(postulation);
+            mockPostulationsService.Verify(p => p.Modifier(It.IsAny<Postulation>()), Times.Never);
+            mockOffreEmploiService.Verify(o => o.ObtenirSelonId(postulation.OffreDEmploiId), Times.Once);
+            
+            ////// Validations des erreurs dans le ModelState
+            var modelState = postulationsController.ModelState;
+            modelState.IsValid.Should().BeFalse();
+            modelState.ErrorCount.Should().Be(1);
+            modelState.Should().ContainKey("DateDisponibilite");
+            modelState["DateDisponibilite"].Errors.FirstOrDefault().ErrorMessage.Should().Be("La date de disponibilité doit être supérieure à la date du jour et inférieure au < date correspondante à date du jour + 45 jours >");
+
+            ////// ViewData
+            actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+
+        }
+
+        [Fact]
+        public async Task Edit_Post_DateFutureInvalide_Retourne_ViewResultAvecModelStateError()
+        {
+            // Etant donné
+            //// Fixture
+            Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+
+            //// Fixture OffreEmploi
+            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
+
+            //// Fixture Documents
+            List<string> listDocuments = new List<string>();
+            listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
+
+            // requete
+            Postulation postulation = new Postulation();
+            postulation.CandidatId = candidatId;
+            postulation.OffreDEmploiId = offreEmploi.Id;
+            postulation.DateDisponibilite = DateTime.Today.AddDays(46);
+            postulation.PretentionSalariale = 50000m;
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(offreEmploi);
+
+            var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            // Lorsque
+            var actionResult = await postulationsController.Edit(postulation) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull(); // Action Result Not Null
+            var requeteEditResult = actionResult.Model as Postulation;
+            requeteEditResult.Should().Be(postulation);
+            mockPostulationsService.Verify(p => p.Modifier(It.IsAny<Postulation>()), Times.Never);
+            mockOffreEmploiService.Verify(o => o.ObtenirSelonId(postulation.OffreDEmploiId), Times.Once);
+            
+            ////// Validations des erreurs dans le ModelState
+            var modelState = postulationsController.ModelState;
+            modelState.IsValid.Should().BeFalse();
+            modelState.ErrorCount.Should().Be(1);
+            modelState.Should().ContainKey("DateDisponibilite");
+            modelState["DateDisponibilite"].Errors.FirstOrDefault().ErrorMessage.Should().Be("La date de disponibilité doit être supérieure à la date du jour et inférieure au < date correspondante à date du jour + 45 jours >");
+
+            ////// ViewData
+            actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+
+        }
+
+        [Fact]
+        public async Task Edit_Post_DateAujourdhuiInvalide_Retourne_ViewResultAvecModelStateError()
+        {
+            // Etant donné
+            //// Fixture
+            Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+
+            //// Fixture OffreEmploi
+            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
+
+            //// Fixture Documents
+            List<string> listDocuments = new List<string>();
+            listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
+
+            // requete
+            Postulation postulation = new Postulation();
+            postulation.CandidatId = candidatId;
+            postulation.OffreDEmploiId = offreEmploi.Id;
+            postulation.DateDisponibilite = DateTime.Today;
+            postulation.PretentionSalariale = 50000m;
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(offreEmploi);
+
+            var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            // Lorsque
+            var actionResult = await postulationsController.Edit(postulation) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull(); // Action Result Not Null
+            var requeteEditResult = actionResult.Model as Postulation;
+            requeteEditResult.Should().Be(postulation);
+            mockPostulationsService.Verify(p => p.Modifier(It.IsAny<Postulation>()), Times.Never);
+            mockOffreEmploiService.Verify(o => o.ObtenirSelonId(postulation.OffreDEmploiId), Times.Once);
+            
+            ////// Validations des erreurs dans le ModelState
+            var modelState = postulationsController.ModelState;
+            modelState.IsValid.Should().BeFalse();
+            modelState.ErrorCount.Should().Be(1);
+            modelState.Should().ContainKey("DateDisponibilite");
+            modelState["DateDisponibilite"].Errors.FirstOrDefault().ErrorMessage.Should().Be("La date de disponibilité doit être supérieure à la date du jour et inférieure au < date correspondante à date du jour + 45 jours >");
+
+            ////// ViewData
+            actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+
+        }
+
+        [Fact]
+        public async Task Edit_Post_PretentionSalarialHorsLimite_Retourne_ViewResultAvecModelStateError()
+        {
+            // Etant donné
+            //// Fixture
+            Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+
+            //// Fixture OffreEmploi
+            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
+
+            //// Fixture Documents
+            List<string> listDocuments = new List<string>();
+            listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
+
+            // requete
+            Postulation postulation = new Postulation();
+            postulation.CandidatId = candidatId;
+            postulation.OffreDEmploiId = offreEmploi.Id;
+            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
+            postulation.PretentionSalariale = 151000m;
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(offreEmploi);
+
+            var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            // Lorsque
+            var actionResult = await postulationsController.Edit(postulation) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull(); // Action Result Not Null
+            var requeteEditResult = actionResult.Model as Postulation;
+            requeteEditResult.Should().Be(postulation);
+            mockPostulationsService.Verify(p => p.Modifier(It.IsAny<Postulation>()), Times.Never);
+            mockOffreEmploiService.Verify(o => o.ObtenirSelonId(postulation.OffreDEmploiId), Times.Once);
+            
+            ////// Validations des erreurs dans le ModelState
+            var modelState = postulationsController.ModelState;
+            modelState.IsValid.Should().BeFalse();
+            modelState.ErrorCount.Should().Be(1);
+            modelState.Should().ContainKey("PretentionSalariale");
+            modelState["PretentionSalariale"].Errors.FirstOrDefault().ErrorMessage.Should().Be("Votre présentation salariale est au-delà de nos limites");
+
+            ////// ViewData
+            actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+        }
+
+        [Fact]
+        public async Task Edit_Post_OffreEmploiInexistant_Retourne_NotFound()
+        {
+            // Etant donné
+            //// Fixture
+            Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+
+            //// Fixture OffreEmploi
+            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
+
+            //// Fixture Documents
+            List<string> listDocuments = new List<string>();
+            listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
+
+            // requete
+            Postulation postulation = new Postulation();
+            postulation.CandidatId = candidatId;
+            postulation.OffreDEmploiId = offreEmploi.Id;
+            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
+            postulation.PretentionSalariale = 50000m;
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync((OffreEmploi)null);
+
+            var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            // Lorsque
+            var actionResult = await postulationsController.Edit(postulation);
+
+            // Alors
+            actionResult.Should().BeOfType(typeof(NotFoundResult));
         }
     }
 }

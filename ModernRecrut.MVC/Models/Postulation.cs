@@ -15,7 +15,7 @@ namespace ModernRecrut.MVC.Models
             DisplayName ("Offre d'emploi"),
             Required(ErrorMessage = "Veuillez sélectionner une offre d'emploi"),
         ]
-        public int offreDEmploiId { get; set; }
+        public int OffreDEmploiId { get; set; }
         [
             DisplayName ("Prétention salarial"),
             Required(ErrorMessage = "Veuillez entrer votre prétention salarial"),

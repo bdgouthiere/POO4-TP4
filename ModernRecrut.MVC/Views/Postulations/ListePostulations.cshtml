@@ -21,7 +21,7 @@
                 Nom du candidat
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.offreDEmploiId)
+                @Html.DisplayNameFor(model => model.OffreDEmploiId)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.PretentionSalariale)
@@ -41,7 +41,7 @@
 
             </td>
             <td>
-                @{ OffreEmploi offreEmploi = await _offreEmploisService.ObtenirSelonId(item.offreDEmploiId);}
+                @{ OffreEmploi offreEmploi = await _offreEmploisService.ObtenirSelonId(item.OffreDEmploiId);}
                 @Html.DisplayFor(modelItem => offreEmploi.Poste)
             </td>
             <td>

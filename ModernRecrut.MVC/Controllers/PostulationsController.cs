@@ -147,7 +147,7 @@ namespace ModernRecrut.MVC.Controllers
         {
             // Validation
             // Verifier que l'offre d'emploi existe et comme c'ezt une valeur passé en hidden, on retourne un NotFound si elle n'existe pas
-            OffreEmploi? offreEmploi = await _offreEmploisService.ObtenirSelonId(postulation.Id);
+            OffreEmploi? offreEmploi = await _offreEmploisService.ObtenirSelonId(postulation.OffreDEmploiId);
             if (offreEmploi == null )
                 return NotFound();
 
@@ -178,6 +178,9 @@ namespace ModernRecrut.MVC.Controllers
                 // Journalisation la modification
                 return RedirectToAction(nameof(ListePostulations));
             }
+
+
+            ViewData["OffreEmploi"] = offreEmploi;
 
             return View(postulation);
         }
