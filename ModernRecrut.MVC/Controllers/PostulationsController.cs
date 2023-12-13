@@ -13,8 +13,8 @@ namespace ModernRecrut.MVC.Controllers
     {
         #region Attributs
         private readonly ILogger<PostulationsController> _logger;
-        private readonly UserManager<Utilisateur> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        //private readonly UserManager<Utilisateur> _userManager;
+        //private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IPostulationsService _postulationsService;
         private readonly IDocumentsService _documentsService;
         private readonly IOffreEmploisService _offreEmploisService;
@@ -22,15 +22,15 @@ namespace ModernRecrut.MVC.Controllers
 
         #region Constructeur
         public PostulationsController(ILogger<PostulationsController> logger,
-            UserManager<Utilisateur> userManager,
-            RoleManager<IdentityRole> roleManager,
+            //UserManager<Utilisateur> userManager,
+            //RoleManager<IdentityRole> roleManager,
             IPostulationsService postulationsService,
             IDocumentsService documentsService,
             IOffreEmploisService offreEmploisService)
         {
             _logger = logger;
-            _userManager = userManager;
-            _roleManager = roleManager;
+            //_userManager = userManager;
+            //_roleManager = roleManager;
             _postulationsService = postulationsService;
             _documentsService = documentsService;
             _offreEmploisService = offreEmploisService;
@@ -39,7 +39,7 @@ namespace ModernRecrut.MVC.Controllers
 
         #region Méthodes publiques
         // Postuler (Accessible - Candidat ou Admin)
-        [Authorize(Roles = "Admin, Candidat")]
+        //[Authorize(Roles = "Admin, Candidat")]
         // GET : Ajout
         public async Task<ActionResult> Postuler(int idOffreEmploi)
         {
@@ -61,18 +61,23 @@ namespace ModernRecrut.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Postuler(RequetePostulation requetPostulation)
         {
+            // Verifier que l'offre d'emploi existe et comme c'ezt une valeur passé en hidden, on retourne un NotFound si elle n'existe pas
+            OffreEmploi? offreEmploi = await _offreEmploisService.ObtenirSelonId(requetPostulation.OffreDemploiId);
+            if (offreEmploi == null )
+                return NotFound();
+
             // Charger les documents pour le candidat
             IEnumerable<string>? documents = await _documentsService.ObtenirSelonUtilisateurId(requetPostulation.CandidatId);
 
             // Check si candidat a un CV
             bool cvPresent = documents?.Any(d => d.StartsWith($"{requetPostulation.CandidatId}_CV_")) ?? false;
             if (!cvPresent)
-                ModelState.AddModelError("all", "Un CV est obligatoire pour postuler. Veuillez déposer au préalable un CV dans votre espace Documents");
+                ModelState.AddModelError("CV", "Un CV est obligatoire pour postuler. Veuillez déposer au préalable un CV dans votre espace Documents");
 
             // Check si candidat a une lettre de motivation _LettreDeMotivation_
             bool lettreMotivationPresent = documents?.Any(d => d.StartsWith($"{requetPostulation.CandidatId}_LettreDeMotivation_")) ?? false;
             if (!lettreMotivationPresent)
-                ModelState.AddModelError("all", "Une lettre de motivation est obligatoire pour postuler. Veuillez déposer au préalable une lettre de motivation dans votre espace Documents");
+                ModelState.AddModelError("LettreMotivation", "Une lettre de motivation est obligatoire pour postuler. Veuillez déposer au préalable une lettre de motivation dans votre espace Documents");
 
             // Check date
             if (requetPostulation.DateDisponibilite <= DateTime.Today || requetPostulation.DateDisponibilite > DateTime.Today.AddDays(45))
@@ -88,7 +93,7 @@ namespace ModernRecrut.MVC.Controllers
 
                 if (postulation == null)
                 {
-                    ModelState.AddModelError("all", "Problème lors de l'ajout de la postulation, veuillez reessayer");
+                    ModelState.AddModelError("AjoutEchoue", "Problème lors de l'ajout de la postulation, veuillez reessayer");
                 }
                 else
                 {
@@ -96,9 +101,6 @@ namespace ModernRecrut.MVC.Controllers
                 }
             }
 
-            OffreEmploi? offreEmploi = await _offreEmploisService.ObtenirSelonId(requetPostulation.OffreDemploiId);
-            if (offreEmploi == null )
-                return NotFound();
 
             ViewData["OffreEmploi"] = offreEmploi;
 
@@ -184,7 +186,7 @@ namespace ModernRecrut.MVC.Controllers
         }
 
         // Notes (Accessible RH ou Admin)
-        [Authorize(Roles = "Admin, RH")]
+        //[Authorize(Roles = "Admin, RH")]
         public ActionResult Notes()
         {
             // Journalisation

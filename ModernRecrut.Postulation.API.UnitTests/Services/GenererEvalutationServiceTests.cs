@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace ModernRecrut.Postulation.API.UnitTests.Services
 {
-    public class GenererEvalutationServiceTest
+    public class GenererEvalutationServiceTests
     {
         [Fact]
         public async Task GenererEvaluation_PretentionSalarial15000_Retourne_NoteNoteDetailSalaireInferieur()
@@ -34,5 +34,10 @@ namespace ModernRecrut.Postulation.API.UnitTests.Services
             note.NomEmeteur.Should().Be("ApplicationPostulation");
             note.NoteDetail.Should().Be("Salaire inférieur à la norme");
         }
+
+        // Test entre 20.000 et 39.999 - TODO 
+        // Test entre 40.000 et 79.999 - TODO
+        // Test entre 80.000 et 99.999 - TODO
+        // Test suprérieur à 100.000 - TODO
     }
 }
