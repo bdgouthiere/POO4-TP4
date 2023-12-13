@@ -179,7 +179,6 @@ namespace ModernRecrut.MVC.Controllers
                 return RedirectToAction(nameof(ListePostulations));
             }
 
-
             ViewData["OffreEmploi"] = offreEmploi;
 
             return View(postulation);

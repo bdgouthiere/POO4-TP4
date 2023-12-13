@@ -20,8 +20,6 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 {
     public class PostulationsControllerTests
     {
-        // HTTPPost de Postualtion
-        // => 
         [Fact]
         public async Task Postuler_CVAbsent_Retourne_ViewResultAvecModelStateError()
         {
@@ -50,12 +48,14 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
 
-            RequetePostulation requetePostulation = new RequetePostulation();
-            requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = It.IsAny<int>(); // A Modifier Erreur
-            requetePostulation.DateDisponibilite = DateTime.Today.AddDays(1);
-            requetePostulation.PretentionSalariale = 50000m;
-            
+            RequetePostulation requetePostulation = new RequetePostulation
+            {
+                CandidatId = candidatId,
+                OffreDemploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
+
             // Lorsque
             var actionResult = await postulationsController.Postuler(requetePostulation) as ViewResult;
 
@@ -106,12 +106,14 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
 
-            RequetePostulation requetePostulation = new RequetePostulation();
-            requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = It.IsAny<int>();
-            requetePostulation.DateDisponibilite = DateTime.Today.AddDays(1);
-            requetePostulation.PretentionSalariale = 50000m;
-            
+            RequetePostulation requetePostulation = new RequetePostulation
+            {
+                CandidatId = candidatId,
+                OffreDemploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
+
             // Lorsque
             var actionResult = await postulationsController.Postuler(requetePostulation) as ViewResult;
 
@@ -162,12 +164,14 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
 
-            RequetePostulation requetePostulation = new RequetePostulation();
-            requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = It.IsAny<int>();
-            requetePostulation.DateDisponibilite = DateTime.Today.AddDays(-1); // Date dans le passé
-            requetePostulation.PretentionSalariale = 50000m;
-            
+            RequetePostulation requetePostulation = new RequetePostulation
+            {
+                CandidatId = candidatId,
+                OffreDemploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(-1), // Date dans le passé
+                PretentionSalariale = 50000m
+            };
+
             // Lorsque
             var actionResult = await postulationsController.Postuler(requetePostulation) as ViewResult;
 
@@ -218,12 +222,14 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
 
-            RequetePostulation requetePostulation = new RequetePostulation();
-            requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = It.IsAny<int>();
-            requetePostulation.DateDisponibilite = DateTime.Today.AddDays(46); // Date dans le passé
-            requetePostulation.PretentionSalariale = 50000m;
-            
+            RequetePostulation requetePostulation = new RequetePostulation
+            {
+                CandidatId = candidatId,
+                OffreDemploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(46), // Date dans le passé
+                PretentionSalariale = 50000m
+            };
+
             // Lorsque
             var actionResult = await postulationsController.Postuler(requetePostulation) as ViewResult;
 
@@ -276,7 +282,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             RequetePostulation requetePostulation = new RequetePostulation();
             requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = It.IsAny<int>();
+            requetePostulation.OffreDemploiId = offreEmploi.Id;
             requetePostulation.DateDisponibilite = DateTime.Today; // Date dans le passé
             requetePostulation.PretentionSalariale = 50000m;
             
@@ -330,12 +336,14 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             var postulationsController = new PostulationsController( mockLogger.Object, mockPostulationService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
 
-            RequetePostulation requetePostulation = new RequetePostulation();
-            requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = It.IsAny<int>();
-            requetePostulation.DateDisponibilite = DateTime.Today.AddDays(1); 
-            requetePostulation.PretentionSalariale = 151000m;
-            
+            RequetePostulation requetePostulation = new RequetePostulation
+            {
+                CandidatId = candidatId,
+                OffreDemploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 151000m
+            };
+
             // Lorsque
             var actionResult = await postulationsController.Postuler(requetePostulation) as ViewResult;
 
@@ -378,12 +386,14 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             listDocuments.Add(valideCV); // Ajout un document CV
 
             // requete
-            RequetePostulation requetePostulation = new RequetePostulation();
-            requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = It.IsAny<int>();
-            requetePostulation.DateDisponibilite = DateTime.Today.AddDays(1); 
-            requetePostulation.PretentionSalariale = 50000m;
-            
+            RequetePostulation requetePostulation = new RequetePostulation
+            {
+                CandidatId = candidatId,
+                OffreDemploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
+
             //// Initialisation Instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationService = new Mock<IPostulationsService>();  // Postulation
@@ -436,11 +446,13 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             listDocuments.Add(valideCV); // Ajout un document CV
 
             // requete
-            RequetePostulation requetePostulation = new RequetePostulation();
-            requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = fixture.Create<int>();
-            requetePostulation.DateDisponibilite = DateTime.Today.AddDays(1);
-            requetePostulation.PretentionSalariale = 50000m;
+            RequetePostulation requetePostulation = new RequetePostulation
+            {
+                CandidatId = candidatId,
+                OffreDemploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
 
             //// Initialisation Instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
@@ -475,11 +487,13 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             string candidatId = fixture.Create<string>();
 
             // requete
-            RequetePostulation requetePostulation = new RequetePostulation();
-            requetePostulation.CandidatId = candidatId;
-            requetePostulation.OffreDemploiId = fixture.Create<int>();
-            requetePostulation.DateDisponibilite = DateTime.Today.AddDays(1);
-            requetePostulation.PretentionSalariale = 50000m;
+            RequetePostulation requetePostulation = new RequetePostulation
+            {
+                CandidatId = candidatId,
+                OffreDemploiId = fixture.Create<int>(),
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
 
             //// Initialisation Instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
@@ -501,9 +515,6 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
         public async Task Edit_IdInexistant_Retourne_NotFound()
         {
             // Etant donné
-            //Fixture fixture = new Fixture();
-            //Postulation postulation = fixture.Create<Postulation>();
-
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
@@ -519,7 +530,6 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             // Alors
             actionResult.Should().BeOfType<NotFoundResult>();
-            //actionResult.Should().BeOfType(typeof(NotFoundResult));
         }
 
         [Fact]
@@ -569,11 +579,13 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             listDocuments.Add(valideCV); // Ajout un document CV
 
             // requete
-            Postulation postulation = new Postulation();
-            postulation.CandidatId = candidatId;
-            postulation.OffreDEmploiId = offreEmploi.Id;
-            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
-            postulation.PretentionSalariale = 50000m;
+            Postulation postulation = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
 
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
@@ -604,23 +616,23 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             Fixture fixture = new Fixture();
 
             string candidatId = fixture.Create<string>();
-            //string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
-            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
 
             //// Fixture OffreEmploi
             OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
 
             //// Fixture Documents
             List<string> listDocuments = new List<string>();
-            //listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
-            listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
 
             // requete
-            Postulation postulation = new Postulation();
-            postulation.CandidatId = candidatId;
-            postulation.OffreDEmploiId = offreEmploi.Id;
-            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
-            postulation.PretentionSalariale = 50000m;
+            Postulation postulation = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
 
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
@@ -661,7 +673,6 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             Fixture fixture = new Fixture();
 
             string candidatId = fixture.Create<string>();
-            //string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
             string valideCV = candidatId + "_CV_" + fixture.Create<string>();
 
             //// Fixture OffreEmploi
@@ -669,15 +680,16 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             //// Fixture Documents
             List<string> listDocuments = new List<string>();
-            //listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
             listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
 
             // requete
-            Postulation postulation = new Postulation();
-            postulation.CandidatId = candidatId;
-            postulation.OffreDEmploiId = offreEmploi.Id;
-            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
-            postulation.PretentionSalariale = 50000m;
+            Postulation postulation = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
 
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
@@ -731,11 +743,13 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
 
             // requete
-            Postulation postulation = new Postulation();
-            postulation.CandidatId = candidatId;
-            postulation.OffreDEmploiId = offreEmploi.Id;
-            postulation.DateDisponibilite = DateTime.Today.AddDays(-1);
-            postulation.PretentionSalariale = 50000m;
+            Postulation postulation = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(-1),
+                PretentionSalariale = 50000m
+            };
 
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
@@ -789,11 +803,13 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
 
             // requete
-            Postulation postulation = new Postulation();
-            postulation.CandidatId = candidatId;
-            postulation.OffreDEmploiId = offreEmploi.Id;
-            postulation.DateDisponibilite = DateTime.Today.AddDays(46);
-            postulation.PretentionSalariale = 50000m;
+            Postulation postulation = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(46),
+                PretentionSalariale = 50000m
+            };
 
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
@@ -847,11 +863,13 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
 
             // requete
-            Postulation postulation = new Postulation();
-            postulation.CandidatId = candidatId;
-            postulation.OffreDEmploiId = offreEmploi.Id;
-            postulation.DateDisponibilite = DateTime.Today;
-            postulation.PretentionSalariale = 50000m;
+            Postulation postulation = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today,
+                PretentionSalariale = 50000m
+            };
 
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
@@ -905,11 +923,13 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
 
             // requete
-            Postulation postulation = new Postulation();
-            postulation.CandidatId = candidatId;
-            postulation.OffreDEmploiId = offreEmploi.Id;
-            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
-            postulation.PretentionSalariale = 151000m;
+            Postulation postulation = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 151000m
+            };
 
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
@@ -962,11 +982,13 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             listDocuments.Add(valideCV); // Ajout un document lettre de Motivation Valide
 
             // requete
-            Postulation postulation = new Postulation();
-            postulation.CandidatId = candidatId;
-            postulation.OffreDEmploiId = offreEmploi.Id;
-            postulation.DateDisponibilite = DateTime.Today.AddDays(1);
-            postulation.PretentionSalariale = 50000m;
+            Postulation postulation = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
 
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
