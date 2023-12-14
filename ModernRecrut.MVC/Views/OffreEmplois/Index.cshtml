@@ -57,9 +57,17 @@
                 @Html.DisplayFor(modelItem => item.Description)
             </td>
             <td>
-                @Html.ActionLink("Modifier", "Edit", new { id=item.Id }) |
+				@if(User.IsInRole("RH") || User.IsInRole("Admin"))
+				{
+					@Html.ActionLink("Modifier", "Edit", new { id=item.Id })
+                    <span>|</span>
+				}
                 @Html.ActionLink("Details", "Details", new { id=item.Id }) |
-                @Html.ActionLink("Supprimer", "Delete", new { id=item.Id }) |
+                @if(User.IsInRole("RH") || User.IsInRole("Admin"))
+                {
+					@Html.ActionLink("Supprimer", "Delete", new { id=item.Id })
+                    <span>|</span>
+                }
 
 				@if (!estFavori)
 				{
@@ -69,7 +77,10 @@
                 {
                     <a asp-controller="Favoris" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-secondary">Retirer des favoris</a>    
                 }
-                <a asp-controller="Postulations" asp-action="Postuler" asp-route-idOffreEmploi="@item.Id" class="btn btn-outline-primary">Postuler</a>
+				@if (User.IsInRole("Candidat"))
+				{
+					<a asp-controller="Postulations" asp-action="Postuler" asp-route-idOffreEmploi="@item.Id" class="btn btn-outline-primary">Postuler</a>
+				}
             </td>
         </tr>
 }

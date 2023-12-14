@@ -1,6 +1,7 @@
 ﻿using ModernRecrut.Postulation.API.DTO;
 using ModernRecrut.Postulation.API.Interfaces;
 using ModernRecrut.Postulation.API.Models;
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ModernRecrut.Postulation.API.Services
@@ -48,7 +49,30 @@ namespace ModernRecrut.Postulation.API.Services
 
         public async Task<bool> Modifier(Models.Postulation postulation)
         {
+            // Postulation existante
+            Models.Postulation postulationExistante = await _postulationRepository.GetByIdAsync(postulation.Id);
+            if (postulationExistante == null)
+                return false;
+
+            // Check si modification de PretentionSalariale 
+            if(postulationExistante.PretentionSalariale != postulation.PretentionSalariale)
+            {
+                IEnumerable<Note> notes = await _notesService.ObtenirTout();
+                Note noteAModifier = notes.FirstOrDefault(n => n.PostulationId == postulation.Id && n.NomEmeteur == "ApplicationPostulation");
+
+                if(noteAModifier != null)
+                {
+                    Note note = _genrateEvaluationService.GenererEvaluation(postulation.PretentionSalariale);
+                    if (noteAModifier.NoteDetail != note.NoteDetail)
+                    {
+                        noteAModifier.NoteDetail = note.NoteDetail;
+                        await _notesService.Modifier(noteAModifier);
+                    }
+                }
+            }
+
             await _postulationRepository.EditAsync(postulation);
+
             return true;
         }
 

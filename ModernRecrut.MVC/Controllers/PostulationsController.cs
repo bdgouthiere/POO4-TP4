@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using ModernRecrut.MVC.Areas.Identity.Data;
 using ModernRecrut.MVC.DTO;
 using ModernRecrut.MVC.Interfaces;
@@ -114,6 +115,7 @@ namespace ModernRecrut.MVC.Controllers
         }
 
         // Details
+        [Authorize(Roles = "Admin, RH, Candidat")]
         public async Task<ActionResult> Details(int id)
         {
             Postulation? postulation = await _postulationsService.ObtenirSelonId(id);
@@ -130,6 +132,7 @@ namespace ModernRecrut.MVC.Controllers
         }
 
         // GET : Modifier
+        [Authorize(Roles = "Admin, RH, Candidat")]
         public async Task<ActionResult> Edit(int id)
         {
             Postulation? postulation = await _postulationsService.ObtenirSelonId(id);
@@ -137,10 +140,13 @@ namespace ModernRecrut.MVC.Controllers
             if(postulation == null)
                 return NotFound();
 
+            ViewData["modificationAuthorisee"] = postulation.DateDisponibilite >= DateTime.Today.AddDays(-5) && postulation.DateDisponibilite <= DateTime.Today.AddDays(5); 
+
             return View(postulation);
         }
 
         // POST : Modifier
+        [Authorize(Roles = "Admin, RH, Candidat")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(Postulation postulation)
@@ -150,6 +156,11 @@ namespace ModernRecrut.MVC.Controllers
             OffreEmploi? offreEmploi = await _offreEmploisService.ObtenirSelonId(postulation.OffreDEmploiId);
             if (offreEmploi == null )
                 return NotFound();
+
+            // Check si on peut Modifier la postulation
+            Postulation postulationExistante = await _postulationsService.ObtenirSelonId(postulation.Id);
+            bool modificationAuthorisee = postulationExistante.DateDisponibilite >= DateTime.Today.AddDays(-5) && postulationExistante.DateDisponibilite <= DateTime.Today.AddDays(5);
+            ViewData["modificationAuthorisee"] = modificationAuthorisee;
 
             // Charger les documents pour le candidat
             IEnumerable<string>? documents = await _documentsService.ObtenirSelonUtilisateurId(postulation.CandidatId);
@@ -172,7 +183,7 @@ namespace ModernRecrut.MVC.Controllers
             if(postulation.PretentionSalariale > 150000m)
                 ModelState.AddModelError("PretentionSalariale", "Votre présentation salariale est au-delà de nos limites");
 
-            if (ModelState.IsValid)
+            if (ModelState.IsValid && modificationAuthorisee) 
             {
                 await _postulationsService.Modifier(postulation);
                 // Journalisation la modification
@@ -185,6 +196,7 @@ namespace ModernRecrut.MVC.Controllers
         }
 
         // GET : Supprimer
+        [Authorize(Roles = "Admin, RH, Candidat")]
         public async Task<ActionResult> Delete(int id)
         {
             Postulation postulation = await _postulationsService.ObtenirSelonId(id);
@@ -192,16 +204,33 @@ namespace ModernRecrut.MVC.Controllers
             if (postulation == null)
                 return NotFound();
 
+            ViewData["suppressionAuthorisee"] = postulation.DateDisponibilite >= DateTime.Today.AddDays(-5) && postulation.DateDisponibilite <= DateTime.Today.AddDays(5); 
+
             return View(postulation);
         }
 
         // POST : Supprimer
+        [Authorize(Roles = "Admin, RH, Candidat")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Delete(int id, Postulation postulation)
         {
+            Postulation postulationASupprimer = await _postulationsService.ObtenirSelonId(id);
+
+            if (postulationASupprimer == null)
+                return NotFound();
+
+            bool suppressionAuthorisee = postulationASupprimer.DateDisponibilite >= DateTime.Today.AddDays(-5) && postulationASupprimer.DateDisponibilite <= DateTime.Today.AddDays(5);
+            if (!suppressionAuthorisee)
+            {
+                ViewData["suppressionAuthorisee"] = suppressionAuthorisee;
+                return View(postulationASupprimer);
+            }
+
+
+
             // Journalisation  
-            _postulationsService.Supprimer(postulation);
+            _postulationsService.Supprimer(postulationASupprimer);
 
             return RedirectToAction(nameof(ListePostulations));
         }

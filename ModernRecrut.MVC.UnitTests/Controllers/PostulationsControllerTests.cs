@@ -545,6 +545,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
             fixture.Behaviors.Add(new OmitOnRecursionBehavior());
             Postulation postulation = fixture.Create<Postulation>();
+            postulation.DateDisponibilite = DateTime.Today.AddDays(1); 
 
             mockPostulationsService.Setup(p => p.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(postulation);
 
@@ -557,6 +558,71 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             actionResult.Should().NotBeNull();
             Postulation postulationResult = actionResult.Model as Postulation;
             postulationResult.Should().Be(postulation);
+
+            //// ViewData
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(true);
+        }
+
+        [Fact]
+        public async Task Edit_DateDisponibiliteInferieurA5jours_Retourne_ViewResultAvecAuthorisationModificationFalse()
+        {
+            // Etant donné
+            Fixture fixture = new Fixture();
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+            Postulation postulation = fixture.Create<Postulation>();
+            postulation.DateDisponibilite = DateTime.Today.AddDays(-6); 
+
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(postulation);
+
+            var postulationsController = new PostulationsController(mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            //Lorsque
+            var actionResult = await postulationsController.Edit(3) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull();
+            Postulation postulationResult = actionResult.Model as Postulation;
+            postulationResult.Should().Be(postulation);
+
+            //// ViewData
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(false);
+        }
+
+        [Fact]
+        public async Task Edit_DateDisponibiliteSuperieurA5jours_Retourne_ViewResultAvecAuthorisationModificationFalse()
+        {
+            // Etant donné
+            Fixture fixture = new Fixture();
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+            Postulation postulation = fixture.Create<Postulation>();
+            postulation.DateDisponibilite = DateTime.Today.AddDays(6); 
+
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(postulation);
+
+            var postulationsController = new PostulationsController(mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            //Lorsque
+            var actionResult = await postulationsController.Edit(3) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull();
+            Postulation postulationResult = actionResult.Model as Postulation;
+            postulationResult.Should().Be(postulation);
+
+            //// ViewData
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(false);
         }
 
         [Fact]
@@ -591,6 +657,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
             mockPostulationsService.Setup(p => p.Modifier(postulation)).Returns(Task.CompletedTask); // Postulation valide
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(postulation.Id)).ReturnsAsync(postulation); // Postulation existante
             Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
             mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
             Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
@@ -606,6 +673,74 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             redirectToActionResult.Should().NotBeNull();
             redirectToActionResult.ActionName.Should().Be("ListePostulations");
             mockPostulationsService.Verify(p => p.Modifier(It.IsAny<Postulation>()), Times.Once());
+        }
+
+        [Fact]
+        public async Task Edit_Post_DateDisponibiliteInferieurA5jours_Retourne_ViewResultAvecAuthorisationModificationFalse()
+        {
+            // Etant donné
+            //// Fixture
+            Fixture fixture = new Fixture();
+
+            string candidatId = fixture.Create<string>();
+            string valideLettreMotivation = candidatId + "_LettreDeMotivation_" + fixture.Create<string>();
+            string valideCV = candidatId + "_CV_" + fixture.Create<string>();
+
+            //// Fixture OffreEmploi
+            OffreEmploi offreEmploi = fixture.Create<OffreEmploi>();
+
+            //// Fixture Documents
+            List<string> listDocuments = new List<string>();
+            listDocuments.Add(valideLettreMotivation); // Ajout un document lettre de Motivation Valide
+            listDocuments.Add(valideCV); // Ajout un document CV
+
+            // requete
+            Postulation postulation = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(1),
+                PretentionSalariale = 50000m
+            };
+
+            Postulation postulationExistante = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today.AddDays(-6),
+                PretentionSalariale = 50000m
+            };
+
+            //// Initialisation instance Mock
+            Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
+            Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            mockPostulationsService.Setup(p => p.Modifier(postulation)).Returns(Task.CompletedTask); // Postulation valide
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(postulationExistante.Id)).ReturnsAsync(postulationExistante); // Postulation valide
+            Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
+            mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
+            Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
+            mockOffreEmploiService.Setup(o => o.ObtenirSelonId(It.IsAny<int>())).ReturnsAsync(offreEmploi);
+
+
+            var postulationsController = new PostulationsController(mockLogger.Object, mockPostulationsService.Object, mockDocumentsService.Object, mockOffreEmploiService.Object);
+
+            // Lorsque 
+            var actionResult = await postulationsController.Edit(postulation) as ViewResult;
+
+            // Alors
+            actionResult.Should().NotBeNull(); // Action Result Not Null
+            var requeteEditResult = actionResult.Model as Postulation;
+            requeteEditResult.Should().Be(postulation);
+            mockPostulationsService.Verify(p => p.Modifier(It.IsAny<Postulation>()), Times.Never);
+            mockOffreEmploiService.Verify(o => o.ObtenirSelonId(postulation.OffreDEmploiId), Times.Once);
+
+            ////// Validations des erreurs dans le ModelState
+            var modelState = postulationsController.ModelState;
+            modelState.IsValid.Should().BeTrue();
+
+            //// ViewData
+            actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(false);
         }
 
         [Fact]
@@ -637,6 +772,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(postulation.Id)).ReturnsAsync(postulation); // Postulation existante
             Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
             mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
             Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
@@ -663,6 +799,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             ////// ViewData
             actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(true);
         }
 
         [Fact]
@@ -694,6 +831,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(postulation.Id)).ReturnsAsync(postulation); // Postulation existante
             Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
             mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
             Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
@@ -720,6 +858,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             ////// ViewData
             actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(true);
 
         }
 
@@ -754,6 +893,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(postulation.Id)).ReturnsAsync(postulation); // Postulation existante
             Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
             mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
             Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
@@ -780,7 +920,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             ////// ViewData
             actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
-
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(true);
         }
 
         [Fact]
@@ -811,9 +951,17 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
                 PretentionSalariale = 50000m
             };
 
+            Postulation postulationExistante = new Postulation
+            {
+                CandidatId = candidatId,
+                OffreDEmploiId = offreEmploi.Id,
+                DateDisponibilite = DateTime.Today,
+                PretentionSalariale = 50000m
+            };
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(postulationExistante.Id)).ReturnsAsync(postulationExistante); // Postulation valide
             Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
             mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
             Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
@@ -840,7 +988,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             ////// ViewData
             actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
-
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(true);
         }
 
         [Fact]
@@ -874,6 +1022,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(postulation.Id)).ReturnsAsync(postulation); // Postulation existante
             Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
             mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
             Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
@@ -900,7 +1049,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             ////// ViewData
             actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
-
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(true);
         }
 
         [Fact]
@@ -934,6 +1083,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
             //// Initialisation instance Mock
             Mock<ILogger<PostulationsController>> mockLogger = new Mock<ILogger<PostulationsController>>();  // Logger
             Mock<IPostulationsService> mockPostulationsService = new Mock<IPostulationsService>();  // Postulation
+            mockPostulationsService.Setup(p => p.ObtenirSelonId(postulation.Id)).ReturnsAsync(postulation); // Postulation existante
             Mock<IDocumentsService> mockDocumentsService = new Mock<IDocumentsService>();  // Documents
             mockDocumentsService.Setup(d => d.ObtenirSelonUtilisateurId(It.IsAny<string>())).ReturnsAsync(listDocuments);
             Mock<IOffreEmploisService> mockOffreEmploiService = new Mock<IOffreEmploisService>();  // OffreEmploiService
@@ -960,6 +1110,7 @@ namespace ModernRecrut.MVC.UnitTests.Controllers
 
             ////// ViewData
             actionResult.ViewData.Should().ContainKey("OffreEmploi").WhoseValue.Should().BeSameAs(offreEmploi);
+            actionResult.ViewData.Should().ContainKey("modificationAuthorisee").WhoseValue.Should().Be(true);
         }
 
         [Fact]

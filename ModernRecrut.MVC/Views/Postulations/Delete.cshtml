@@ -7,6 +7,7 @@
 
 @{
     ViewData["Title"] = "Delete";
+	bool suppressionAuthorisee = ViewData["suppressionAuthorisee"] is bool && (bool)ViewData["suppressionAuthorisee"];
 }
 
 <h1>Delete</h1>
@@ -43,9 +44,15 @@
             @Html.DisplayFor(model => model.DateDisponibilite)
         </dd>
     </dl>
-    
-    <form asp-action="Delete">
-        <input type="submit" value="Supprimer" class="btn btn-danger" /> |
-        <a asp-action="ListePostulations">Retour à la liste des postulations</a>
-    </form>
+
+    @if(suppressionAuthorisee) {
+		<form asp-action="Delete">
+			<input type="submit" value="Supprimer" class="btn btn-danger" /> |
+			<a asp-action="ListePostulations">Retour à la liste des postulations</a>
+        </form>
+    } else
+    {
+        <p class="text-danger">Il n'est pas possible de modifier ou supprimer une postulation dont la date de disponibilité est inférieure ou supérieure de 5 jours à la date du jour</p>
+		<a asp-action="ListePostulations">Retour à la liste des postulations</a>
+    }
 </div>

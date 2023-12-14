@@ -52,6 +52,15 @@
 		<a asp-controller="Favoris" asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Retirer des favoris</a>    
     }
 
-    | <a asp-action="Edit" asp-route-id="@Model.Id">Modifier</a> |
+    @if (User.IsInRole("Candidat"))
+    {
+        <a asp-controller="Postulations" asp-action="Postuler" asp-route-idOffreEmploi="@Model.Id" class="btn btn-outline-primary me-2">Postuler</a>	
+        <span>|</span>
+    }
+    @if (User.IsInRole("Admin") || User.IsInRole("RH")){
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="me-2">Modifier</a> 
+        <span>|</span>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="me-2">Supprimer</a> 
+    }
     <a asp-action="Index">Retour à la liste des offres d'emploi</a>
 </div>
