@@ -27,7 +27,7 @@ namespace ModernRecrut.MVC.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation
+                _logger.LogError(CustomLogEvents.Notes, $"Erreur lors de la création d'une note.");
                 return null;
             }
             return await response.Content.ReadFromJsonAsync<Note>();
@@ -39,7 +39,7 @@ namespace ModernRecrut.MVC.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation - TODO
+                _logger.LogError(CustomLogEvents.Notes, $"Erreur - Modification de la note ID {note.Id}");
             }
         }
 
@@ -48,7 +48,7 @@ namespace ModernRecrut.MVC.Services
             HttpResponseMessage response = await _httpClient.GetAsync(_noteApiUrl + id);
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation - TODO
+                _logger.LogError(CustomLogEvents.Notes, $"Erreur - ObtenirSelon pour une note ID {id}");
                 return null;
             }
             return await response.Content.ReadFromJsonAsync<Note>();
@@ -60,7 +60,7 @@ namespace ModernRecrut.MVC.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation - TODO
+                _logger.LogError(CustomLogEvents.Postulation, "Erreur lors de la requête pour obtenir toutes les notes");
                 return null;
             }
             IEnumerable<Note>? notes = await response.Content.ReadFromJsonAsync<IEnumerable<Note>>();
@@ -74,7 +74,7 @@ namespace ModernRecrut.MVC.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation - TODO
+                _logger.LogError(CustomLogEvents.OffreEmploi, $"Erreur lors de la suppression de la note ID: {note.Id}");
             }
         }
         #endregion
