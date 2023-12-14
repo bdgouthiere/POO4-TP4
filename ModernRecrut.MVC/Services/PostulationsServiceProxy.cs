@@ -27,7 +27,7 @@ namespace ModernRecrut.MVC.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation - TODO
+                _logger.LogError(CustomLogEvents.Postulation, "Erreur lors de la requête pour obtenir toutes les postulations");
 
                 return null;
             }
@@ -41,7 +41,7 @@ namespace ModernRecrut.MVC.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation - TODO
+                _logger.LogError(CustomLogEvents.Postulation, $"Erreur - ObtenirSelon pour une postulation ID {id}");
                 return null;
             }
 
@@ -54,7 +54,7 @@ namespace ModernRecrut.MVC.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation - TODO
+                _logger.LogError(CustomLogEvents.Postulation, $"Erreur lors de la création d'une postulation.");
                 return null;
             }
             return await response.Content.ReadFromJsonAsync<Postulation>();
@@ -66,7 +66,7 @@ namespace ModernRecrut.MVC.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation - TODO
+                _logger.LogError(CustomLogEvents.Postulation, $"Erreur - Modification de la postulation ID {postulation.Id}");
             }
 
         }
@@ -77,7 +77,7 @@ namespace ModernRecrut.MVC.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                // Journalisation - TODO
+                _logger.LogError(CustomLogEvents.OffreEmploi, $"Erreur lors de la suppression de la postulation ID: {postulation.Id}");
             }
         }
         #endregion

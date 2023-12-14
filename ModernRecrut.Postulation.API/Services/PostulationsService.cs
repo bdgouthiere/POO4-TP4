@@ -31,6 +31,11 @@ namespace ModernRecrut.Postulation.API.Services
                 PretentionSalariale = requetePostulation.PretentionSalariale,
                 DateDisponibilite = requetePostulation.DateDisponibilite
             };
+            // Postulation existante
+            var postulations = await ObtenirTout(); 
+            if (postulations.Any(p => p.CandidatId == requetePostulation.CandidatId && p.OffreDEmploiId == requetePostulation.OffreDemploiId))
+                return null;
+
             Models.Postulation postulation= await _postulationRepository.AddAsync(postulationAAjouter);
 
             // Ajouter une note
